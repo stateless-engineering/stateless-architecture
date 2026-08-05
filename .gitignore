@@ -1,0 +1,16 @@
+# Rust build output
+**/target/
+reference/rust/Cargo.lock
+reference/Cargo.lock
+reference/wasm/pkg/
+
+# mdBook build output
+book/build/
+
+# OS files
+.DS_Store
+*.swp
+
+# Editor
+.vscode/
+.idea/

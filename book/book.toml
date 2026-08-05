@@ -1,0 +1,20 @@
+[book]
+title = "Stateless Architecture"
+authors = ["Stateless Engineering"]
+description = "The formal specification, pattern language, and reference implementation of the stateless core loop."
+language = "en"
+multilingual = false
+src = "."
+
+[build]
+build-dir = "book/build"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/stateless-engineering/stateless-architecture"
+edit-url-template = "https://github.com/stateless-engineering/stateless-architecture/edit/main/book/{path}"
+
+[output.html.fold]
+enable = true
+level = 1

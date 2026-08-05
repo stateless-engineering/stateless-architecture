@@ -1,0 +1,158 @@
+syntax = "proto3";
+
+package stateless_architecture;
+
+// Service Bus Protocol
+//
+// Defines the contract for service discovery, invocation, and lifecycle
+// in a stateless architecture. Services are pure functions: (blob, input) -> (blob, output).
+// "Down is the default" — no service runs unless invoked.
+
+// ─────────────────────────────────────────────────────────────────────
+// State Blob
+// ─────────────────────────────────────────────────────────────────────
+
+message StateBlob {
+  // Format version (semver).
+  string version = 1;
+
+  // Schema URI this blob's payload conforms to.
+  string schema = 2;
+
+  // Creation time (ISO 8601).
+  string timestamp = 3;
+
+  // Application-specific state (JSON-encoded).
+  bytes payload = 4;
+
+  // Optional encryption envelope.
+  BlobSeal seal = 5;
+
+  // Hash of the parent blob (for versioning DAG).
+  string parent = 6;
+}
+
+message BlobSeal {
+  string algorithm = 1;
+  bytes ciphertext = 2;
+  bytes nonce = 3;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Service Manifest
+// ─────────────────────────────────────────────────────────────────────
+
+message ServiceManifest {
+  // Lowercase, hyphenated name. Unique within a registry.
+  string name = 1;
+
+  // Semver version.
+  string version = 2;
+
+  // Human-readable description.
+  string description = 3;
+
+  // URI of JSON Schema for input validation.
+  string input_schema = 4;
+
+  // URI of JSON Schema for output validation.
+  string output_schema = 5;
+
+  // Capability tags for discovery and routing.
+  repeated string capabilities = 6;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Service Invocation
+// ─────────────────────────────────────────────────────────────────────
+
+message InvokeRequest {
+  // Name of the service to invoke.
+  string service_name = 1;
+
+  // The current state blob.
+  StateBlob blob = 2;
+
+  // Service-specific input (JSON-encoded).
+  bytes input = 3;
+}
+
+message InvokeResponse {
+  // The new state blob after service execution.
+  StateBlob blob = 1;
+
+  // Service output (JSON-encoded).
+  bytes output = 2;
+
+  // Error message (empty on success).
+  string error = 3;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// CRDT Operation (Mesh Sync)
+// ─────────────────────────────────────────────────────────────────────
+
+message Operation {
+  enum OpType {
+    INSERT = 0;
+    DELETE = 1;
+    UPDATE = 2;
+    MOVE = 3;
+  }
+
+  OpType op = 1;
+  string target = 2;
+  bytes value = 3;
+
+  // Hybrid logical clock for ordering.
+  LogicalClock clock = 4;
+
+  // ID of the originating peer.
+  string origin = 5;
+}
+
+message LogicalClock {
+  uint64 lamport = 1;
+  string wall = 2;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Lifecycle Events
+// ─────────────────────────────────────────────────────────────────────
+
+message LifecycleEvent {
+  enum State {
+    ACTIVE = 0;
+    FREEZING = 1;
+    HIBERNATED = 2;
+    RESTORING = 3;
+  }
+
+  string blob_id = 1;
+  State from_state = 2;
+  State to_state = 3;
+  string timestamp = 4;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Service Definition
+// ─────────────────────────────────────────────────────────────────────
+
+service StatelessBus {
+  // List all available services.
+  rpc ListServices(Empty) returns (ServiceList);
+
+  // Invoke a service.
+  rpc Invoke(InvokeRequest) returns (InvokeResponse);
+
+  // Stream operations for mesh sync.
+  rpc SyncOperations(stream Operation) returns (stream Operation);
+
+  // Publish a lifecycle event.
+  rpc PublishLifecycle(LifecycleEvent) returns (Empty);
+}
+
+message Empty {}
+message ServiceList {
+  repeated ServiceManifest services = 1;
+}

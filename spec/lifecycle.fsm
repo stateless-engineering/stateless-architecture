@@ -1,0 +1,45 @@
+@startuml lifecycle
+!theme plain
+skinparam backgroundColor transparent
+
+title Stateless System Lifecycle
+
+state "Active" as active
+state "Freezing" as freezing
+state "Hibernated" as hibernated
+state "Restoring" as restoring
+
+[*] --> active : create(blob)
+
+active --> freezing : hibernate()
+freezing --> hibernated :\nsnapshot()\nseal()\nstore()
+freezing --> active : cancel
+
+hibernated --> restoring : restore()
+restoring --> active :\nmaterialize()\nrender()
+
+active --> [*] : destroy()
+
+hibernated --> [*] : gc(eviction\npolicy)
+
+note right of active
+  **Running state.**
+  Service invocations
+  transform the blob.
+end note
+
+note right of hibernated
+  **Evicted state.**
+  Only the blob exists.
+  Zero CPU, minimal memory.
+end note
+
+note bottom of restoring
+  **Progressive restoration:**
+  1. Shell (static capture)
+  2. Structure (DOM, layout)
+  3. Interactivity (JS handlers)
+  4. Full state (network, live data)
+end note
+
+@enduml

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stateless-architecture.org/spec/state-blob.schema.json",
+  "title": "StateBlob",
+  "description": "The serializable representation of an entire system's state. The blob is the only thing that crosses the eviction boundary — everything else is a throwaway projection.",
+  "type": "object",
+  "required": ["version", "schema", "timestamp", "payload"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Blob format version (semver). Current: 0.1.0"
+    },
+    "schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "URI of the JSON Schema this blob's payload conforms to"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation time in ISO 8601"
+    },
+    "payload": {
+      "description": "Application-specific state. Structure defined by the schema URI."
+    },
+    "seal": {
+      "description": "Optional encryption envelope. Present when the blob is sealed (encrypted at rest).",
+      "type": "object",
+      "required": ["algorithm", "ciphertext", "nonce"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "description": "Encryption algorithm (e.g. AES-256-GCM)"
+        },
+        "ciphertext": {
+          "type": "string",
+          "description": "Encrypted payload (hex-encoded)"
+        },
+        "nonce": {
+          "type": "string",
+          "description": "Nonce/IV (hex-encoded)"
+        }
+      }
+    },
+    "parent": {
+      "type": "string",
+      "description": "SHA-256 hash of the parent blob. Enables lineage tracking and DAG versioning."
+    }
+  },
+  "additionalProperties": false
+}
