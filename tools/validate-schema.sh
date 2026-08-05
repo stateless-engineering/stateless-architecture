@@ -3,7 +3,7 @@
 #
 # Usage: ./tools/validate-schema.sh <blob.json>
 #
-# Requires: ajv-cli (npm install -g ajv-cli)
+# Uses Ajv 2020-12 (bundles the draft the schema declares). Requires Node.
 
 set -euo pipefail
 
@@ -16,10 +16,29 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-if ! command -v ajv &> /dev/null; then
-    echo "Error: ajv-cli not found. Install with: npm install -g ajv-cli"
+if ! command -v node &> /dev/null; then
+    echo "Error: node not found"
     exit 1
 fi
 
-ajv validate -s "$SCHEMA" -d "$1"
-echo "✓ Valid state blob"
+DOC="$(realpath "$1")"
+
+# Install ajv locally if absent (no-save keeps the repo clean).
+if [ ! -d "$SCRIPT_DIR/../node_modules/ajv" ]; then
+    npm install --no-save ajv@8 ajv-formats > /dev/null 2>&1
+fi
+
+node -e "
+const Ajv2020 = require('ajv/dist/2020.js');
+const addFormats = require('ajv-formats');
+const ajv = new Ajv2020({ strict: false });
+addFormats(ajv);
+const schema = require('$SCHEMA');
+const validate = ajv.compile(schema);
+const doc = require('$DOC');
+if (!validate(doc)) {
+  console.error(JSON.stringify(validate.errors, null, 1));
+  process.exit(1);
+}
+console.log('✓ Valid state blob');
+"

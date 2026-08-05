@@ -2,9 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://stateless-architecture.org/spec/state-blob.schema.json",
   "title": "StateBlob",
-  "description": "The serializable representation of an entire system's state. The blob is the only thing that crosses the eviction boundary — everything else is a throwaway projection.",
+  "description": "The serializable representation of an entire system's state. The blob is the only thing that crosses the eviction boundary \u2014 everything else is a throwaway projection.",
   "type": "object",
-  "required": ["version", "schema", "timestamp", "payload"],
+  "required": [
+    "version",
+    "schema",
+    "timestamp",
+    "payload"
+  ],
   "properties": {
     "version": {
       "type": "string",
@@ -26,8 +31,15 @@
     },
     "seal": {
       "description": "Optional encryption envelope. Present when the blob is sealed (encrypted at rest).",
-      "type": "object",
-      "required": ["algorithm", "ciphertext", "nonce"],
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "algorithm",
+        "ciphertext",
+        "nonce"
+      ],
       "properties": {
         "algorithm": {
           "type": "string",
@@ -44,7 +56,10 @@
       }
     },
     "parent": {
-      "type": "string",
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "SHA-256 hash of the parent blob. Enables lineage tracking and DAG versioning."
     }
   },
