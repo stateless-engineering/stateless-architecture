@@ -1,0 +1,51 @@
+name: Deploy mdBook to GitHub Pages
+
+on:
+  # Manual trigger so the book can be published on demand.
+  workflow_dispatch:
+  # Auto-deploy on main when the book source changes.
+  push:
+    branches: [main]
+    paths:
+      - 'book/**'
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+# Pages deployment needs the pages/id-token permissions; contents stays read.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mdBook
+        uses: peaceiris/actions-mdbook@v2
+
+      - name: Build book
+        run: mdbook build
+        working-directory: book
+
+      # book.toml sets build-dir = "book/build", resolved relative to the
+      # book root, so the rendered site lands in book/book/build.
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: book/book/build
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -101,7 +101,7 @@ mdBook build    # or: mdbook serve for live preview
 ```bash
 cd reference
 cargo build
-cargo test      # 17 tests: blob, service, lifecycle, progressive, mesh
+cargo test      # 40 tests: blob, service, lifecycle, progressive, mesh
 ```
 
 ### Validate schemas
